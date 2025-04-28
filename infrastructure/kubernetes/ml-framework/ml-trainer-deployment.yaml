@@ -1,0 +1,119 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ml-trainer
+  namespace: ai-research-platform
+  labels:
+    app: ml-trainer
+    component: ml-framework
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ml-trainer
+  template:
+    metadata:
+      labels:
+        app: ml-trainer
+        component: ml-framework
+    spec:
+      containers:
+      - name: ml-trainer
+        image: ai-research-platform/ml-trainer:latest
+        imagePullPolicy: IfNotPresent
+        resources:
+          limits:
+            cpu: "4"
+            memory: "8Gi"
+            nvidia.com/gpu: 1
+          requests:
+            cpu: "2"
+            memory: "4Gi"
+        env:
+        - name: PYTHON_ENV
+          value: "production"
+        - name: MONGODB_URI
+          value: "mongodb://$(MONGODB_USERNAME):$(MONGODB_PASSWORD)@mongodb:27017/admin"
+        - name: MONGODB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: mongodb-secret
+              key: username
+        - name: MONGODB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mongodb-secret
+              key: password
+        - name: POSTGRES_URI
+          value: "postgresql://$(POSTGRES_USERNAME):$(POSTGRES_PASSWORD)@postgres:5432/research_db"
+        - name: POSTGRES_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: username
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: password
+        - name: MINIO_ENDPOINT
+          value: "minio:9000"
+        - name: MINIO_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: minio-secret
+              key: username
+        - name: MINIO_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: minio-secret
+              key: password
+        ports:
+        - containerPort: 8090
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8090
+          initialDelaySeconds: 60
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8090
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        volumeMounts:
+        - name: ml-models
+          mountPath: /app/models
+      volumes:
+      - name: ml-models
+        persistentVolumeClaim:
+          claimName: ml-models-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ml-trainer
+  namespace: ai-research-platform
+  labels:
+    app: ml-trainer
+    component: ml-framework
+spec:
+  selector:
+    app: ml-trainer
+  ports:
+  - port: 8090
+    targetPort: 8090
+  type: ClusterIP
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ml-models-pvc
+  namespace: ai-research-platform
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 20Gi

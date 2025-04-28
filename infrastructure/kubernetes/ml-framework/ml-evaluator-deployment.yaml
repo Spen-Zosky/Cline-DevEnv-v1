@@ -1,0 +1,107 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ml-evaluator
+  namespace: ai-research-platform
+  labels:
+    app: ml-evaluator
+    component: ml-framework
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ml-evaluator
+  template:
+    metadata:
+      labels:
+        app: ml-evaluator
+        component: ml-framework
+    spec:
+      containers:
+      - name: ml-evaluator
+        image: ai-research-platform/ml-evaluator:latest
+        imagePullPolicy: IfNotPresent
+        resources:
+          limits:
+            cpu: "2"
+            memory: "4Gi"
+          requests:
+            cpu: "1"
+            memory: "2Gi"
+        env:
+        - name: PYTHON_ENV
+          value: "production"
+        - name: MONGODB_URI
+          value: "mongodb://$(MONGODB_USERNAME):$(MONGODB_PASSWORD)@mongodb:27017/admin"
+        - name: MONGODB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: mongodb-secret
+              key: username
+        - name: MONGODB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mongodb-secret
+              key: password
+        - name: POSTGRES_URI
+          value: "postgresql://$(POSTGRES_USERNAME):$(POSTGRES_PASSWORD)@postgres:5432/research_db"
+        - name: POSTGRES_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: username
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: password
+        - name: MINIO_ENDPOINT
+          value: "minio:9000"
+        - name: MINIO_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: minio-secret
+              key: username
+        - name: MINIO_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: minio-secret
+              key: password
+        ports:
+        - containerPort: 8091
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8091
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8091
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        volumeMounts:
+        - name: ml-models
+          mountPath: /app/models
+          readOnly: true
+      volumes:
+      - name: ml-models
+        persistentVolumeClaim:
+          claimName: ml-models-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ml-evaluator
+  namespace: ai-research-platform
+  labels:
+    app: ml-evaluator
+    component: ml-framework
+spec:
+  selector:
+    app: ml-evaluator
+  ports:
+  - port: 8091
+    targetPort: 8091
+  type: ClusterIP

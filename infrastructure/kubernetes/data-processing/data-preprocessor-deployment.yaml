@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: data-preprocessor
+  namespace: ai-research-platform
+  labels:
+    app: data-preprocessor
+    component: data-processing
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: data-preprocessor
+  template:
+    metadata:
+      labels:
+        app: data-preprocessor
+        component: data-processing
+    spec:
+      containers:
+      - name: data-preprocessor
+        image: ai-research-platform/data-preprocessor:latest
+        imagePullPolicy: IfNotPresent
+        resources:
+          limits:
+            cpu: "2"
+            memory: "2Gi"
+          requests:
+            cpu: "1"
+            memory: "1Gi"
+        env:
+        - name: PYTHON_ENV
+          value: "production"
+        ports:
+        - containerPort: 8082
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8082
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8082
+          initialDelaySeconds: 5
+          periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: data-preprocessor
+  namespace: ai-research-platform
+  labels:
+    app: data-preprocessor
+    component: data-processing
+spec:
+  selector:
+    app: data-preprocessor
+  ports:
+  - port: 8082
+    targetPort: 8082
+  type: ClusterIP

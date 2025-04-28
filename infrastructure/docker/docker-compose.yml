@@ -1,0 +1,206 @@
+version: '3.8'
+
+services:
+  # Data Collection Services
+  data-crawler:
+    build: 
+      context: ../../services/data-collection/crawler
+    container_name: data-crawler
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ../../services/data-collection/crawler:/app
+      - /app/node_modules
+    networks:
+      - ai-research-network
+
+  data-scraper:
+    build: 
+      context: ../../services/data-collection/scraper
+    container_name: data-scraper
+    restart: unless-stopped
+    environment:
+      - PYTHON_ENV=development
+    volumes:
+      - ../../services/data-collection/scraper:/app
+    networks:
+      - ai-research-network
+
+  # Data Processing Services
+  data-preprocessor:
+    build: 
+      context: ../../services/data-processing/preprocessor
+    container_name: data-preprocessor
+    restart: unless-stopped
+    environment:
+      - PYTHON_ENV=development
+    volumes:
+      - ../../services/data-processing/preprocessor:/app
+    depends_on:
+      - data-crawler
+      - data-scraper
+    networks:
+      - ai-research-network
+
+  data-transformer:
+    build: 
+      context: ../../services/data-processing/transformer
+    container_name: data-transformer
+    restart: unless-stopped
+    environment:
+      - PYTHON_ENV=development
+    volumes:
+      - ../../services/data-processing/transformer:/app
+    depends_on:
+      - data-preprocessor
+    networks:
+      - ai-research-network
+
+  # Data Storage Services
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    restart: unless-stopped
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb-data:/data/db
+    networks:
+      - ai-research-network
+
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=research_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - ai-research-network
+
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+    networks:
+      - ai-research-network
+
+  # ML Framework Services
+  ml-trainer:
+    build: 
+      context: ../../services/ml-framework/trainer
+    container_name: ml-trainer
+    restart: unless-stopped
+    environment:
+      - PYTHON_ENV=development
+    volumes:
+      - ../../services/ml-framework/trainer:/app
+    depends_on:
+      - mongodb
+      - postgres
+      - minio
+    networks:
+      - ai-research-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  ml-evaluator:
+    build: 
+      context: ../../services/ml-framework/evaluator
+    container_name: ml-evaluator
+    restart: unless-stopped
+    environment:
+      - PYTHON_ENV=development
+    volumes:
+      - ../../services/ml-framework/evaluator:/app
+    depends_on:
+      - ml-trainer
+    networks:
+      - ai-research-network
+
+  # API Gateway
+  api-gateway:
+    build: 
+      context: ../../services/api-gateway
+    container_name: api-gateway
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../../services/api-gateway:/app
+      - /app/node_modules
+    depends_on:
+      - ml-trainer
+      - ml-evaluator
+    networks:
+      - ai-research-network
+
+  # Research Dashboard
+  research-dashboard:
+    build: 
+      context: ../../services/research-dashboard
+    container_name: research-dashboard
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+    ports:
+      - "3000:3000"
+    volumes:
+      - ../../services/research-dashboard:/app
+      - /app/node_modules
+    depends_on:
+      - api-gateway
+    networks:
+      - ai-research-network
+
+  # Web Generator
+  web-generator:
+    build: 
+      context: ../../services/web-generator
+    container_name: web-generator
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+    ports:
+      - "3001:3001"
+    volumes:
+      - ../../services/web-generator:/app
+      - /app/node_modules
+    depends_on:
+      - api-gateway
+    networks:
+      - ai-research-network
+
+networks:
+  ai-research-network:
+    driver: bridge
+
+volumes:
+  mongodb-data:
+  postgres-data:
+  minio-data:

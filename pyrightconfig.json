@@ -1,0 +1,21 @@
+{
+  "include": [
+    "services"
+  ],
+  "exclude": [
+    "**/node_modules",
+    "**/__pycache__"
+  ],
+  "typeCheckingMode": "basic",
+  "useLibraryCodeForTypes": true,
+  "stubPath": "./typings",
+  "reportMissingImports": false,
+  "reportMissingTypeStubs": false,
+  "reportUnusedCallResult": false,
+  "reportMissingModuleSource": false,
+  "reportArgumentType": false,
+  "reportOptionalMemberAccess": false,
+  "reportAttributeAccessIssue": false,
+  "reportOptionalCall": false,
+  "reportUnusedCoroutine": false
+}
