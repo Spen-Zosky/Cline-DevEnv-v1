@@ -1,16 +1,20 @@
 @echo off
 echo Starting Research Dashboard using Docker...
 
-REM Navigate to the Docker directory
+REM Use absolute path for Docker Compose
+cd /d %~dp0
 cd ..\..\infrastructure\docker
 
 REM Start the research dashboard and its backend using Docker Compose
-docker-compose up -d research-dashboard-backend research-dashboard
+echo Building and starting the research dashboard services...
+docker-compose up -d --build research-dashboard-backend research-dashboard
 
 REM Wait for the services to start
-timeout /t 5
+echo Waiting for services to start...
+timeout /t 10
 
 REM Open the dashboard in the default browser
+echo Opening dashboard in browser...
 start http://localhost:3000
 
 echo Dashboard started successfully!
