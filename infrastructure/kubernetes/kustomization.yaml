@@ -28,6 +28,7 @@ resources:
   - api-gateway/api-gateway-deployment.yaml
   
   # Frontend Applications
+  - research-dashboard/research-dashboard-backend-deployment.yaml
   - research-dashboard/research-dashboard-deployment.yaml
   - web-generator/web-generator-deployment.yaml
 

@@ -160,7 +160,26 @@ services:
     networks:
       - ai-research-network
 
-  # Research Dashboard
+  # Research Dashboard Backend
+  research-dashboard-backend:
+    build: 
+      context: ../../services/research-dashboard/backend
+    container_name: research-dashboard-backend
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+    ports:
+      - "3001:3001"
+    volumes:
+      - ../../services/research-dashboard/backend:/app
+      - /app/node_modules
+    depends_on:
+      - api-gateway
+    networks:
+      - ai-research-network
+
+  # Research Dashboard Frontend
   research-dashboard:
     build: 
       context: ../../services/research-dashboard
@@ -168,13 +187,14 @@ services:
     restart: unless-stopped
     environment:
       - NODE_ENV=development
+      - REACT_APP_BACKEND_URL=http://localhost:3001
     ports:
       - "3000:3000"
     volumes:
       - ../../services/research-dashboard:/app
       - /app/node_modules
     depends_on:
-      - api-gateway
+      - research-dashboard-backend
     networks:
       - ai-research-network
 

@@ -35,10 +35,10 @@ The platform is built with a microservices architecture, with the following main
 - **ML Evaluator**: Evaluates machine learning models.
 
 ### API Gateway
-- **API Gateway**: Provides a unified API for all services.
+- **API Gateway**: Provides a unified API for all services, handling routing, authentication, and rate limiting. Built with Express.js, it acts as the central entry point for all API requests.
 
 ### Research Dashboard
-- **Research Dashboard**: Provides a user interface for managing research projects.
+- **Research Dashboard**: A modern React-based web application that provides a user interface for managing research projects, monitoring system health, and controlling all platform components.
 
 ### Web Generator
 - **Web Generator**: Generates websites and web applications.
@@ -93,19 +93,30 @@ To deploy the platform to a Kubernetes cluster:
 
 The Research Dashboard provides a user interface for managing research projects. You can:
 
+- Monitor the health and status of all platform services
+- View system metrics and logs
 - Create and manage data collection jobs
 - Preprocess and transform data
 - Train and evaluate machine learning models
 - Generate websites and web applications
+
+The dashboard includes the following main sections:
+
+- **Dashboard**: Overview of system health, service status, and recent jobs
+- **Services**: Detailed view of all services with the ability to start, stop, and restart them
+- **Data Collection**: Interface for creating and managing data collection jobs
+- **Data Processing**: Interface for preprocessing and transforming data
+- **ML Framework**: Interface for training and evaluating machine learning models
+- **System Monitor**: Detailed system metrics, resource usage, and logs
 
 #### API Gateway
 
-The API Gateway provides a unified API for all services. You can:
+The API Gateway provides a unified API for all services. It includes:
 
-- Create and manage data collection jobs
-- Preprocess and transform data
-- Train and evaluate machine learning models
-- Generate websites and web applications
+- **Health Endpoints**: Check the health of the API Gateway and all services
+- **Service Management**: Start, stop, and restart services
+- **System Information**: Get system metrics and logs
+- **Service-Specific Endpoints**: Proxied endpoints for all microservices
 
 ## Development
 
@@ -118,7 +129,14 @@ The API Gateway provides a unified API for all services. You can:
 │   ├── docker/                    # Docker Compose configuration
 │   └── kubernetes/                # Kubernetes configuration
 └── services/                      # Microservices
-    ├── api-gateway/               # API Gateway service
+    ├── api-gateway/               # API Gateway service (Express.js)
+    │   ├── src/                   # Source code
+    │   │   ├── index.js           # Main entry point
+    │   │   ├── routes/            # API routes
+    │   │   ├── middleware/        # Express middleware
+    │   │   └── utils/             # Utility functions
+    │   ├── Dockerfile             # Docker configuration
+    │   └── package.json           # Node.js dependencies
     ├── data-collection/           # Data Collection services
     │   ├── crawler/               # Data Crawler service
     │   └── scraper/               # Data Scraper service
@@ -128,7 +146,16 @@ The API Gateway provides a unified API for all services. You can:
     ├── ml-framework/              # Machine Learning Framework services
     │   ├── trainer/               # ML Trainer service
     │   └── evaluator/             # ML Evaluator service
-    ├── research-dashboard/        # Research Dashboard service
+    ├── research-dashboard/        # Research Dashboard service (React)
+    │   ├── src/                   # Source code
+    │   │   ├── components/        # React components
+    │   │   ├── pages/             # Page components
+    │   │   ├── services/          # API services
+    │   │   ├── utils/             # Utility functions
+    │   │   ├── App.tsx            # Main App component
+    │   │   └── index.tsx          # Entry point
+    │   ├── Dockerfile             # Docker configuration
+    │   └── package.json           # Node.js dependencies
     └── web-generator/             # Web Generator service
 ```
 
@@ -141,6 +168,7 @@ To add a new service:
 3. Add the service to the Docker Compose configuration.
 4. Add the service to the Kubernetes configuration.
 5. Update the API Gateway to include the new service.
+6. Add the service to the Research Dashboard interface.
 
 ## License
 
@@ -148,8 +176,10 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## Acknowledgments
 
-- [FastAPI](https://fastapi.tiangolo.com/)
+- [Express.js](https://expressjs.com/)
 - [React](https://reactjs.org/)
+- [Material-UI](https://mui.com/)
+- [FastAPI](https://fastapi.tiangolo.com/)
 - [Docker](https://www.docker.com/)
 - [Kubernetes](https://kubernetes.io/)
 - [MongoDB](https://www.mongodb.com/)
